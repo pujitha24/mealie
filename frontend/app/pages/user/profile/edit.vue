@@ -87,6 +87,7 @@
                     <v-text-field
                       v-model="userCopy.email"
                       :label="$t('user.email')"
+                      :rules="[validators.required, validators.email]"
                       validate-on="blur"
                       required
                       density="comfortable"
@@ -227,6 +228,7 @@ import { useUserApi } from "~/composables/api";
 import UserAvatar from "~/components/Domain/User/UserAvatar.vue";
 import UserPasswordStrength from "~/components/Domain/User/UserPasswordStrength.vue";
 import { validators } from "~/composables/use-validators";
+import type { VForm } from "~/types/auto-forms";
 import { useUserActivityPreferences } from "~/composables/use-users/preferences";
 import useDefaultActivity from "~/composables/use-default-activity";
 import { ActivityKey } from "~/lib/api/types/activity";
@@ -259,6 +261,8 @@ watch(user, () => {
 
 const api = useUserApi();
 const showPassword = ref(false);
+const userUpdate = ref<VForm | null>(null);
+
 const password = reactive({
   current: "",
   newOne: "",
@@ -270,6 +274,9 @@ const passwordsMatch = computed(() => password.newOne === password.newTwo && pas
 async function updateUser() {
   const userData = userCopy.value;
   if (!userData?.id || !userData.email) return;
+
+  const { valid } = (await userUpdate.value?.validate()) ?? { valid: true };
+  if (!valid) return;
 
   const updatePayload: UserBase = {
     id: userData.id,
